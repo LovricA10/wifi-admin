@@ -31,12 +31,19 @@ public class SoapClientConfig {
     }
 
     @Bean
-    WebServiceTemplate webServiceTemplate(Jaxb2Marshaller marshaller, SoapPlatformProperties properties) {
+    SoapPrefixFixingMessageFactory soapPrefixFixingMessageFactory() {
+        return new SoapPrefixFixingMessageFactory();
+    }
+
+    @Bean
+    WebServiceTemplate webServiceTemplate(Jaxb2Marshaller marshaller, SoapPlatformProperties properties,
+                                          SoapPrefixFixingMessageFactory messageFactory) {
         HttpUrlConnectionMessageSender sender = new HttpUrlConnectionMessageSender();
         sender.setConnectionTimeout(Duration.ofMillis(properties.connectTimeoutMs()));
         sender.setReadTimeout(Duration.ofMillis(properties.readTimeoutMs()));
 
-        WebServiceTemplate template = new WebServiceTemplate();
+        WebServiceTemplate template = new SoapBodyFaultAwareWebServiceTemplate();
+        template.setMessageFactory(messageFactory);
         template.setMarshaller(marshaller);
         template.setUnmarshaller(marshaller);
         template.setMessageSender(sender);

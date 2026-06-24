@@ -107,7 +107,11 @@ class SoapWifiPlatformClientTest {
         sender.setConnectionTimeout(Duration.ofMillis(5000));
         sender.setReadTimeout(Duration.ofMillis(5000));
 
-        WebServiceTemplate template = new WebServiceTemplate();
+        SoapPrefixFixingMessageFactory messageFactory = new SoapPrefixFixingMessageFactory();
+        messageFactory.afterPropertiesSet();
+
+        WebServiceTemplate template = new SoapBodyFaultAwareWebServiceTemplate();
+        template.setMessageFactory(messageFactory);
         template.setMarshaller(marshaller);
         template.setUnmarshaller(marshaller);
         template.setMessageSender(sender);
@@ -145,6 +149,22 @@ class SoapWifiPlatformClientTest {
     }
 
     @Test
+    void getByCpeId_requestUsesSoapEnvelopePrefix() {
+        wireMock.stubFor(post(urlEqualTo("/platform"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/xml;charset=utf-8")
+                        .withBody(GET_RESPONSE_XML)));
+
+        client.getByCpeId("CPE_001");
+
+        wireMock.verify(postRequestedFor(urlEqualTo("/platform"))
+                .withRequestBody(containing("soap:Envelope"))
+                .withRequestBody(containing("soap:Body"))
+                .withRequestBody(containing("tns:GetCpeIdRequest"))
+                .withRequestBody(containing("tns:cpeId")));
+    }
+
+    @Test
     void getByCpeId_parsesResponseCorrectly() {
         wireMock.stubFor(post(urlEqualTo("/platform"))
                 .willReturn(aResponse()
@@ -161,7 +181,7 @@ class SoapWifiPlatformClientTest {
     }
 
     @Test
-    void getByCpeId_soapFaultNotFound_throwsCpeNotFoundException() {
+    void getByCpeId_soapFaultNotFound_http500_throwsCpeNotFoundException() {
         wireMock.stubFor(post(urlEqualTo("/platform"))
                 .willReturn(aResponse()
                         .withStatus(500)
@@ -173,7 +193,31 @@ class SoapWifiPlatformClientTest {
     }
 
     @Test
-    void getByCpeId_genericSoapFault_throwsPlatformFaultException() {
+    void getByCpeId_soapFaultNotFound_http200_throwsCpeNotFoundException() {
+        wireMock.stubFor(post(urlEqualTo("/platform"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/xml;charset=utf-8")
+                        .withBody(FAULT_NOT_FOUND_XML)));
+
+        assertThatThrownBy(() -> client.getByCpeId("CPE_001"))
+                .isInstanceOf(CpeNotFoundException.class);
+    }
+
+    @Test
+    void getByCpeId_genericSoapFault_http200_throwsPlatformFaultException() {
+        wireMock.stubFor(post(urlEqualTo("/platform"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "text/xml;charset=utf-8")
+                        .withBody(FAULT_GENERIC_XML)));
+
+        assertThatThrownBy(() -> client.getByCpeId("CPE_001"))
+                .isInstanceOf(PlatformFaultException.class);
+    }
+
+    @Test
+    void getByCpeId_genericSoapFault_http500_throwsPlatformFaultException() {
         wireMock.stubFor(post(urlEqualTo("/platform"))
                 .willReturn(aResponse()
                         .withStatus(500)
@@ -206,6 +250,23 @@ class SoapWifiPlatformClientTest {
 
         wireMock.verify(postRequestedFor(urlEqualTo("/platform"))
                 .withHeader("SOAPAction", containing("updateCpeId")));
+    }
+
+    @Test
+    void update_requestUsesSoapEnvelopePrefix() {
+        wireMock.stubFor(post(urlEqualTo("/platform"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/xml;charset=utf-8")
+                        .withBody(UPDATE_RESPONSE_XML)));
+
+        var config = new WifiConfiguration("CPE_001", WifiBand.BAND_5_GHZ, "UpdatedSSID", EncryptionType.WPA3_SAE, "newpass");
+        client.update(config);
+
+        wireMock.verify(postRequestedFor(urlEqualTo("/platform"))
+                .withRequestBody(containing("soap:Envelope"))
+                .withRequestBody(containing("soap:Body"))
+                .withRequestBody(containing("tns:UpdateCpeIdRequest"))
+                .withRequestBody(containing("tns:configuration")));
     }
 
     @Test
@@ -246,7 +307,11 @@ class SoapWifiPlatformClientTest {
                     SoapWifiConfiguration.class);
             marshaller.afterPropertiesSet();
 
-            WebServiceTemplate template = new WebServiceTemplate();
+            SoapPrefixFixingMessageFactory messageFactory = new SoapPrefixFixingMessageFactory();
+            messageFactory.afterPropertiesSet();
+
+            WebServiceTemplate template = new SoapBodyFaultAwareWebServiceTemplate();
+            template.setMessageFactory(messageFactory);
             template.setMarshaller(marshaller);
             template.setUnmarshaller(marshaller);
             template.setMessageSender(sender);

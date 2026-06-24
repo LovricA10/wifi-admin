@@ -1,0 +1,28 @@
+services:
+  platform-mock:
+    image: mockoon/cli:9.2.0
+    container_name: platform-mock
+    command:
+      - --data
+      - /data/platform-mock.json
+      - --port
+      - "3000"
+      - --hostname
+      - 0.0.0.0
+    volumes:
+      - ./mockoon/platform-mock.json:/data/platform-mock.json:ro
+    ports:
+      - "8080:3000"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wifi-admin-backend
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      WIFI_ADMIN_PLATFORM_SOAP_URL: http://platform-mock:3000/platform
+    depends_on:
+      - platform-mock
