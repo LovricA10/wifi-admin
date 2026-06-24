@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+wifi-admin:
+  platform:
+    soap:
+      url: ${WIFI_PLATFORM_SOAP_URL}
+      connect-timeout-ms: ${WIFI_PLATFORM_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${WIFI_PLATFORM_READ_TIMEOUT_MS:5000}
+  cors:
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+
+logging:
+  level:
+    root: INFO
+    hr.ht.rnd.wifiadmin: INFO

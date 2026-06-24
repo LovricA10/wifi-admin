@@ -4,22 +4,10 @@ server:
 spring:
   application:
     name: wifi-admin-backend
-
-  datasource:
-    url: jdbc:h2:mem:wifiadmin
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  h2:
-    console:
-      enabled: true
-
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-
   flyway:
     enabled: true
 
@@ -28,15 +16,36 @@ management:
     web:
       exposure:
         include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
-platform:
-  soap:
-    url: http://localhost:8080/platform
-    connect-timeout-ms: 5000
-    read-timeout-ms: 5000
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
-scheduler:
-  wifi-sync:
+wifi-admin:
+  platform:
+    soap:
+      url: http://localhost:8080/platform
+      connect-timeout-ms: 5000
+      read-timeout-ms: 5000
+  sync:
     enabled: true
-    cron: "0 0 2 * * *"
-    batch-size: 100
+    cron: "0 0 3 * * *"
+    cpe-ids:
+      - CPE_001
+      - CPE_002
+      - CPE_003
+      - CPE_004
+      - CPE_005
+      - CPE_006
+      - CPE_007
+      - CPE_008
+      - CPE_009
+      - CPE_010
+      - CPE_011
+      - CPE_012
+  cors:
+    allowed-origins:
+      - http://localhost:5173

@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:wifiadmin
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+logging:
+  level:
+    hr.ht.rnd.wifiadmin: DEBUG
+    org.springframework.ws: DEBUG
+    org.flywaydb: INFO
