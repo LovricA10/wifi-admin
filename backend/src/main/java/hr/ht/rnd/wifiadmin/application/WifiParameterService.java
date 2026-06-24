@@ -4,6 +4,7 @@ import hr.ht.rnd.wifiadmin.api.dto.WifiConfigurationRequest;
 import hr.ht.rnd.wifiadmin.api.dto.WifiConfigurationResponse;
 import hr.ht.rnd.wifiadmin.domain.EncryptionType;
 import hr.ht.rnd.wifiadmin.domain.WifiConfiguration;
+import hr.ht.rnd.wifiadmin.infrastructure.persistence.WifiConfigurationPersistenceAdapter;
 import hr.ht.rnd.wifiadmin.infrastructure.soap.WifiPlatformClient;
 import org.springframework.stereotype.Service;
 
@@ -12,23 +13,42 @@ public class WifiParameterService {
 
     private final WifiConfigurationValidator validator;
     private final WifiPlatformClient platformClient;
+    private final WifiConfigurationPersistenceAdapter persistenceAdapter;
 
-    WifiParameterService(WifiConfigurationValidator validator, WifiPlatformClient platformClient) {
+    WifiParameterService(
+            WifiConfigurationValidator validator,
+            WifiPlatformClient platformClient,
+            WifiConfigurationPersistenceAdapter persistenceAdapter
+    ) {
         this.validator = validator;
         this.platformClient = platformClient;
+        this.persistenceAdapter = persistenceAdapter;
     }
 
     public WifiConfigurationResponse getWifiParameter(String cpeId) {
-        WifiConfiguration configuration = platformClient.getByCpeId(cpeId.trim());
-        return toResponse(configuration);
+        String normalizedCpeId = cpeId.trim();
+        return persistenceAdapter.findByCpeId(normalizedCpeId)
+                .map(this::toResponse)
+                .orElseGet(() -> {
+                    WifiConfiguration fromPlatform = platformClient.getByCpeId(normalizedCpeId);
+                    WifiConfiguration saved = persistenceAdapter.save(fromPlatform);
+                    return toResponse(saved);
+                });
     }
 
     public WifiConfigurationResponse updateWifiParameter(WifiConfigurationRequest request) {
         WifiConfigurationRequest trimmed = trim(request);
         validator.validate(trimmed);
         WifiConfiguration configuration = toDomain(trimmed);
-        WifiConfiguration updated = platformClient.update(configuration);
-        return toResponse(updated);
+        WifiConfiguration confirmed = platformClient.update(configuration);
+        WifiConfiguration saved = persistenceAdapter.save(confirmed);
+        return toResponse(saved);
+    }
+
+    public WifiConfigurationResponse refreshWifiParameter(String cpeId) {
+        WifiConfiguration fromPlatform = platformClient.getByCpeId(cpeId.trim());
+        WifiConfiguration saved = persistenceAdapter.saveFromSync(fromPlatform);
+        return toResponse(saved);
     }
 
     private WifiConfigurationRequest trim(WifiConfigurationRequest request) {
