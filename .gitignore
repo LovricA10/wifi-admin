@@ -1,8 +1,15 @@
 node_modules/
-package-lock.json
 .env
 *.log
 scripts/
+
+# Build artifacts
+build/
+.gradle/
+frontend/dist/
+
+# OS
+.DS_Store
 
 # IDE
 .idea/

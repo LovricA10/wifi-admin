@@ -40,10 +40,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/wifi-parameter").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().denyAll()
                 )
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.deny())
+                        .frameOptions(frame -> frame.sameOrigin())
                         .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
                 );
         return http.build();

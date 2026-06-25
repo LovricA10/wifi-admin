@@ -93,4 +93,4 @@ Covers unit tests (validator, service, scheduler), `@WebMvcTest` controller test
 
 ## Security note
 
-Spring Security is wired (stateless, CSRF disabled, CORS for `http://localhost:5173`, `X-Frame-Options: DENY`) but authentication is not enforced. The endpoints are public to keep the assignment easy to evaluate. OAuth2/JWT can be added later by changing `permitAll` to `.authenticated()` and adding a resource server dependency.
+Spring Security is wired (stateless, CSRF disabled, CORS for `http://localhost:5173`, `X-Frame-Options: SAMEORIGIN`) but authentication is not enforced. The endpoints are public to keep the assignment easy to evaluate. OAuth2/JWT can be added later by changing `permitAll` to `.authenticated()` and adding a resource server dependency.
